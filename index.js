@@ -8,6 +8,11 @@ inherits(Graphmitter, EventEmitter)
 
 module.exports = Graphmitter
 
+function each(obj, iter) {
+  for(var k in obj) iter(k, obj[k])
+}
+
+
 function Graphmitter () {
   this.nodes = {}
 }
@@ -19,14 +24,10 @@ proto.node = function (n) {
 }
 
 proto.edge = function (from, to, data) {
-  var _data = this.node(from).edge(to, data)
+  var _data = this.node(from).edge(to, data || true)
   if(_data !== data)
     this.emit('edge', from, to, data, _data)
   return this
-}
-
-function each(obj, iter) {
-  for(var k in obj) iter(k, obj[k])
 }
 
 proto.each = function (iter) {
@@ -59,7 +60,7 @@ nproto.edge = function (to, data) {
   return _data
 }
 
-nproto.edge = function (iter) {
+nproto.each = function (iter) {
   each(this.edges, iter)
   return this
 }
