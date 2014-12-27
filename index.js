@@ -14,6 +14,7 @@ function each(obj, iter) {
 
 
 function Graphmitter () {
+  if(!(this instanceof Graphmitter)) return new Graphmitter()
   this.nodes = {}
 }
 
@@ -24,6 +25,7 @@ proto.node = function (n) {
 }
 
 proto.edge = function (from, to, data) {
+  this.node(to)
   var _data = this.node(from).edge(to, data || true)
   if(_data !== data)
     this.emit('edge', from, to, data, _data)
@@ -47,6 +49,37 @@ proto.toJSON = function (iter) {
   return g
 }
 
+proto.traverse = function (opts) {
+  opts = opts || {}
+  var start = opts.start
+  var hops = opts.hops
+  var max = opts.max
+
+  var nodes = 1
+
+  var reachable = {}
+  var queue
+
+  var queue = [{key: start, hops: 0}]
+
+  reachable[start] = 0
+
+  while(queue.length && (!max || nodes < max)) {
+    var o = queue.shift()
+    var h = o.hops
+    if(!hops || (h + 1 <= hops))
+      this.nodes[o.key].each(function (k) {
+        if(reachable[k] != null) return
+        reachable[k] = h + 1
+        nodes ++
+        queue.push({key: k, hops: h + 1})
+      })
+  }
+
+  return reachable
+
+}
+
 function Node () {
   this.edges = {}
 }
@@ -64,4 +97,3 @@ nproto.each = function (iter) {
   each(this.edges, iter)
   return this
 }
-
