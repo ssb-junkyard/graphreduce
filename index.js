@@ -55,6 +55,8 @@ proto.traverse = function (opts) {
   var hops = opts.hops
   var max = opts.max
 
+  if(!start) throw new Error('Graphmitter#traverse: start must be provided')
+
   var nodes = 1
 
   var reachable = {}
