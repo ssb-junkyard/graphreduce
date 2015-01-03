@@ -45,3 +45,11 @@ tape('hops', function (t) {
 
   t.end()
 })
+
+//make sure the empty graph does not throw
+tape('empty graph', function (t) {
+  var g = new Graphmitter()
+  var o = g.traverse({start:'a'})
+  t.deepEqual(o, {a: 0})
+  t.end()
+})
