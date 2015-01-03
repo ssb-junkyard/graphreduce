@@ -70,7 +70,7 @@ proto.traverse = function (opts) {
     var o = queue.shift()
     var h = o.hops
     var n = this.nodes[o.key]
-    if(n && !hops || (h + 1 <= hops))
+    if(n && (!hops || (h + 1 <= hops)))
       n.each(function (k) {
         if(reachable[k] != null) return
         reachable[k] = h + 1
