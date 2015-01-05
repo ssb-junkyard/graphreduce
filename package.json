@@ -2,10 +2,10 @@
   "name": "graphmitter",
   "description": "",
   "version": "1.2.0",
-  "homepage": "https://github.com/dominictarr/graphmitter",
+  "homepage": "https://github.com/ssbc/graphmitter",
   "repository": {
     "type": "git",
-    "url": "git://github.com/dominictarr/graphmitter.git"
+    "url": "git://github.com/ssbc/graphmitter.git"
   },
   "scripts": {
     "prepublish": "npm ls && npm test",
