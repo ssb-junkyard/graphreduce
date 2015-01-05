@@ -15,20 +15,7 @@ tape('hops', function (t) {
     }
   }
 
-  var g = new Graphmitter()
-  var n = 0
-
-  function rand(n) {
-    return '#'+~~(Math.random()*n)
-  }
-
-  var edges = 200, nodes = 100
-  for(var i = 0; i < nodes; i++)
-    g.node(i)
-  for(var i = 0; i < edges; i++) {
-    var a = rand(nodes), b = rand(nodes)
-    g.edge(a, b).edge(b, a)
-  }
+  var g = Graphmitter.random(100, 300)
 
   var reachable = g.traverse({start: '#0'})
 
@@ -36,12 +23,32 @@ tape('hops', function (t) {
 
   var reachable3 = g.traverse({start: '#0', max: 20})
 
+  var reachable4 = g.traverse({start: '#0', hops: 2, max: 20})
+
   t.ok(Object.keys(reachable).length)
 
+  console.log('reachable2 is subset of reachable')
   subset(reachable2, reachable)
+  console.log('reachable3 is subset of reachable')
   subset(reachable3, reachable)
 
-  subset(reachable2, reachable3)
+
+  //if the random graph happened not to have 20 nodes within 2 hops
+  //then reachable3 will be larger than reachable2.
+
+  if(Object.keys(reachable2).length > 20) {
+    console.log('reachable3 is subset of reachable2')
+    subset(reachable3, reachable2)
+  } else {
+    console.log('reachable2 is subset of reachable3')
+    subset(reachable2, reachable3)
+  }
+
+  //since reachable4 is either 2 hops or 20 nodes
+  //it's always the subset of either 2 or 3.
+
+  subset(reachable4, reachable3)
+  subset(reachable4, reachable2)
 
   t.end()
 })
