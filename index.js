@@ -35,6 +35,13 @@ nproto.edge = function (to, data) {
   return _data
 }
 
+//also returns the old data for this edge..
+nproto.del = function (to, data) {
+  var _data = this.edges[to]
+  delete this.edges[to]
+  return _data
+}
+
 nproto.each = function (iter) {
   each(this.edges, iter)
   return this
@@ -61,6 +68,13 @@ proto.edge = function (from, to, data) {
   var _data = this.node(from).edge(to, data || true)
   if(_data !== data)
     this.emit('edge', from, to, data, _data)
+  return this
+}
+
+proto.del = function (from, to) {
+  var data = this.node(from).del(to)
+  if (typeof data !== 'undefined')
+    this.emit('del', from, to, data)
   return this
 }
 
