@@ -31,7 +31,7 @@ var nproto = Node.prototype
 //returns the old data for this edge..
 nproto.edge = function (to, data) {
   var _data = this.edges[to]
-  this.edges[to] = data
+  this.edges[to] = (data == null ? true : data)
   return _data
 }
 
@@ -58,14 +58,24 @@ function Graphmitter () {
 
 var proto = Graphmitter.prototype
 
+proto.hasNode = function (n) {
+  return !!this.nodes[n]
+}
+
+proto.hasEdge = function (f, t) {
+  return this.hasNode(f) && !!this.nodes[f].edges[t] != null
+}
+
 proto.node = function (n) {
   return this.nodes[n] = this.nodes[n] || new Node(n)
 }
 
 proto.edge = function (from, to, data) {
-  this.node(from)
+  data = (data == null ? true : data)
+  var f = this.node(from)
   this.node(to)
-  var _data = this.node(from).edge(to, data || true)
+  var _data = f.edge(to, data)
+
   if(_data !== data)
     this.emit('edge', from, to, data, _data)
   return this
@@ -199,3 +209,25 @@ proto.rank = function (opts) {
   return ranks
 }
 
+proto.changes = function (opts, listener) {
+  var self = this
+  var max = opts.hops || 3
+  var hops = this.traverse(opts)
+
+  function onEdge (from, to) {
+    //if this edge is part of the initial setd
+    if(hops[from] != null && hops[from] < max) {
+      if(hops[to] == null) {
+        var h = hops[from] + 1
+        if(hops[to] == null || hops[to] > h)
+          listener(from, to, hops[to] = h)
+      }
+    }
+  }
+
+  this.on('edge', onEdge)
+
+  return function () {
+    self.removeListener('edge', onEdge)
+  }
+}
