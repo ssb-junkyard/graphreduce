@@ -93,6 +93,30 @@ proto.each = function (iter) {
   return this
 }
 
+proto.eachEdge = function (iter) {
+  each(this.nodes, function (from, n) {
+    each(n.edges, function (to, data) {
+      iter(from, to, data)
+    })
+  })
+  return this
+}
+
+//get a random node
+proto.random = function () {
+  var keys = Object.keys(this.nodes)
+  return keys[~~(keys.length*Math.random())]
+}
+
+//add another subgraph
+proto.add = function (g2) {
+  var g1 = this
+  g2.eachEdge(function (from, to, data) {
+    g1.edge(from, to, data)
+  })
+  return this
+}
+
 proto.toJSON = function (iter) {
   var g = {}
   this.each(function (k, v) {
@@ -109,18 +133,19 @@ proto.toJSON = function (iter) {
 // graph generators
 //
 
-Graphmitter.random = function (nodes, edges) {
+Graphmitter.random = function (nodes, edges, prefix) {
+  prefix = prefix || '#'
   if(isNaN(+nodes)) throw new Error('nodes must be a number')
   if(isNaN(+edges)) throw new Error('edges must be a number')
 
   var n = 0, g = new Graphmitter()
 
   function rand(n) {
-    return '#'+~~(Math.random()*n)
+    return prefix+~~(Math.random()*n)
   }
 
   for(var i = 0; i < nodes; i++)
-    g.node('#'+i)
+    g.node(prefix+i)
 
   for(var i = 0; i < edges; i++) {
     var a = rand(nodes), b = rand(nodes)
@@ -137,38 +162,41 @@ Graphmitter.random = function (nodes, edges) {
 
 // probably move these to another file when there get to be lots of them.
 
-proto.traverse = function (opts) {
-  opts = opts || {}
-  var start = opts.start
-  var hops = opts.hops
-  var max = opts.max
 
-  if(!start) throw new Error('Graphmitter#traverse: start must be provided')
+function widthTraverse (graph, reachable, start, depth, hops, max, iter) {
+  if(!start)
+    throw new Error('Graphmitter#traverse: start must be provided')
 
   var nodes = 1
 
-  var reachable = {}
-  var queue
+  reachable[start] = reachable[start] == null ? 0 : reachable[start]
 
-  var queue = [{key: start, hops: 0}]
-
-  reachable[start] = 0
+  var queue = [{key: start, hops: depth}]
+  iter = iter || function () {}
 
   while(queue.length && (!max || nodes < max)) {
     var o = queue.shift()
     var h = o.hops
-    var n = this.nodes[o.key]
+    var n = graph.nodes[o.key]
     if(n && (!hops || (h + 1 <= hops)))
       n.each(function (k) {
-        if(reachable[k] != null) return
+        // If we have already been to this node by a shorter path,
+        // then skip this node (this only happens when processing
+        // a realtime edge)
+        if(reachable[k] != null && reachable[k] < h + 1) return
+        iter(o.key, k, h + 1, reachable[k])
         reachable[k] = h + 1
         nodes ++
         queue.push({key: k, hops: h + 1})
       })
   }
-
   return reachable
+}
 
+
+proto.traverse = function (opts) {
+  opts = opts || {}
+  return widthTraverse(this, {}, opts.start, 0, opts.hops, opts.max, opts.each)
 }
 
 // page rank. I adapted the algorithm to use
@@ -211,16 +239,28 @@ proto.rank = function (opts) {
 
 proto.changes = function (opts, listener) {
   var self = this
-  var max = opts.hops || 3
+  var maxHops = opts.hops || 3
+  var maxNodes = opts.max || 150
   var hops = this.traverse(opts)
+  listener = listener || opts.each
 
   function onEdge (from, to) {
     //if this edge is part of the initial setd
-    if(hops[from] != null && hops[from] < max) {
-      if(hops[to] == null) {
-        var h = hops[from] + 1
-        if(hops[to] == null || hops[to] > h)
-          listener(from, to, hops[to] = h)
+    if(hops[from] != null && hops[from] < maxHops) {
+      //edges to new nodes.
+      var h = hops[from] + 1
+      var _h = hops[to]
+      if(_h == null)
+        listener(from, to, hops[to] = h, _h)
+      else if(Math.min(h, _h) != _h)
+        listener(from, to, hops[to] = Math.min(h, _h), _h)
+
+      if(h <= maxHops && h != _h) {
+        //also add other nodes that are now reachable.
+        widthTraverse(self, hops, to, h, maxHops, maxNodes, function (from, to, h, _h) {
+          listener(from, to, h, _h)
+        })
+
       }
     }
   }
