@@ -60,3 +60,4 @@ tape('empty graph', function (t) {
   t.deepEqual(o, {a: 0})
   t.end()
 })
+
