@@ -30,7 +30,7 @@ tape('test adding one edge', function (t) {
 
   var i = 0, __hops
 
-  g.changes({start: '#0', hops: 3}, function (from, to, hops, _hops) {
+  g.traverse({start: '#0', hops: 3, old: false}, function (from, to, hops, _hops) {
     i++
     console.log(i, from, to, hops, _hops)
     if(i === 1) {
@@ -69,7 +69,7 @@ tape('add a whole graph', function (t) {
     return null == a ? b : Math.min(a, b)
   }
 
-  g1.changes({start: '#0', hops: 5}, function (from, to, h, _h) {
+  g1.traverse({start: '#0', hops: 5, old: false}, function (from, to, h, _h) {
     hops[to] = min(hops[to], h)
   })
 
@@ -102,7 +102,7 @@ tape('test adding a branch.', function (t) {
   g.node('#0')
 
   t.deepEqual(g.traverse({start: '#0'}), {'#0': 0})
-  g.changes({start: '#0', each: function (from, to, h, _h) {
+  g.traverse({start: '#0', each: function (from, to, h, _h) {
     edges.push([from, to, h, _h])
   }})
 
@@ -133,7 +133,7 @@ tape('test shortening a chain', function (t) {
     .edge('#0', '#1').edge('#1', '#2')
     .edge('#2', '#3').edge('#3', '#4')
 
-  g.changes({start: '#0', each: function (from, to, h, _h) {
+  g.traverse({start: '#0', each: function (from, to, h, _h) {
     edges.push([from, to, h, _h])
   }})
 
@@ -156,7 +156,7 @@ tape('test cancel the edge listener', function (t) {
   var g = Graphmitter()
     .edge('#0', '#1')
 
-  var cancel = g.changes({start: '#0', each: function (f,t,h,_h) {
+  var cancel = g.traverse({start: '#0', each: function (f,t,h,_h) {
     edges.push([f,t,h,_h])
   }})
 
@@ -193,8 +193,7 @@ tape('join two paths', function (t) {
   var g = Graphmitter()
     .edge('#0', '#1')
 
-  var cancel = g.changes({start: '#0', each: function (f, t, h, _h) {
-    console.log(t, h)
+  var cancel = g.traverse({start: '#0', each: function (f, t, h, _h) {
     edges.push([f,t,h,_h])
   }})
 

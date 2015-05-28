@@ -190,13 +190,52 @@ function widthTraverse (graph, reachable, start, depth, hops, max, iter) {
         queue.push({key: k, hops: h + 1})
       })
   }
+
   return reachable
 }
 
+proto.traverse = function (opts, onEach) {
+  var self = this
+  var maxHops = opts.hops || 3
+  var maxNodes = opts.max || 150
+  var reachable = {}
+  opts.each = onEach = onEach || opts.each
 
-proto.traverse = function (opts) {
-  opts = opts || {}
-  return widthTraverse(this, {}, opts.start, 0, opts.hops, opts.max, opts.each)
+  widthTraverse(
+    this, reachable,
+    opts.start,
+    0,             //initial hops
+    opts.hops,     //max hops
+    opts.max,      //max nodes
+    opts.old !== false && onEach
+  )
+
+  if(!onEach || opts.live === false) return reachable
+
+  function onEdge (from, to) {
+    //if this edge is part of the initial setd
+    if(reachable[from] != null && reachable[from] < maxHops) {
+      //edges to new nodes.
+      var h = reachable[from] + 1
+      var _h = reachable[to]
+      if(_h == null)
+        onEach(from, to, reachable[to] = h, _h)
+      else if(Math.min(h, _h) != _h)
+        onEach(from, to, reachable[to] = Math.min(h, _h), _h)
+
+      if(h <= maxHops && h != _h) {
+        //also add other nodes that are now reachable.
+        widthTraverse(self, reachable, to, h, maxHops, maxNodes, onEach)
+
+      }
+    }
+  }
+
+  this.on('edge', onEdge)
+
+  return function () {
+    self.removeListener('edge', onEdge)
+  }
 }
 
 // page rank. I adapted the algorithm to use
@@ -235,39 +274,4 @@ proto.rank = function (opts) {
     _ranks = __ranks
   }
   return ranks
-}
-
-proto.changes = function (opts, listener) {
-  var self = this
-  var maxHops = opts.hops || 3
-  var maxNodes = opts.max || 150
-  var hops = this.traverse(opts)
-  listener = listener || opts.each
-
-  function onEdge (from, to) {
-    //if this edge is part of the initial setd
-    if(hops[from] != null && hops[from] < maxHops) {
-      //edges to new nodes.
-      var h = hops[from] + 1
-      var _h = hops[to]
-      if(_h == null)
-        listener(from, to, hops[to] = h, _h)
-      else if(Math.min(h, _h) != _h)
-        listener(from, to, hops[to] = Math.min(h, _h), _h)
-
-      if(h <= maxHops && h != _h) {
-        //also add other nodes that are now reachable.
-        widthTraverse(self, hops, to, h, maxHops, maxNodes, function (from, to, h, _h) {
-          listener(from, to, h, _h)
-        })
-
-      }
-    }
-  }
-
-  this.on('edge', onEdge)
-
-  return function () {
-    self.removeListener('edge', onEdge)
-  }
 }
