@@ -70,6 +70,11 @@ proto.node = function (n) {
   return this.nodes[n] = this.nodes[n] || new Node(n)
 }
 
+proto.get = function (f, t) {
+  if(t == null) return this.nodes[f]
+  return this.hasNode(f) ? this.nodes[f].edges[t] : null
+}
+
 proto.edge = function (from, to, data) {
   data = (data == null ? true : data)
   var f = this.node(from)
