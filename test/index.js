@@ -3,6 +3,22 @@
 var tape = require('tape')
 var Graphmitter = require('../')
 
+tape('get', function (t) {
+
+  var g = Graphmitter.random(10, 30)
+
+  g.each(function (key, node) {
+    t.equal(node, g.get(key))
+  })
+
+  g.eachEdge(function (src, dst, v) {
+    t.equal(g.get(src, dst), v)
+  })
+
+  t.end()
+
+})
+
 //RANDOMLY generate a graph and then check that it
 //has some reasonable properties.
 
