@@ -12,12 +12,6 @@ function each(obj, iter) {
   for(var k in obj) iter(k, obj[k])
 }
 
-function count(obj) {
-  var c = 0
-  for(var k in obj) c++
-  return c
-}
-
 //
 // Node / Vertice
 //
@@ -33,6 +27,10 @@ nproto.edge = function (to, data) {
   var _data = this.edges[to]
   this.edges[to] = (data == null ? true : data)
   return _data
+}
+
+nproto.has = function (to) {
+  return this.edges[to]
 }
 
 //also returns the old data for this edge..
@@ -161,122 +159,7 @@ Graphmitter.random = function (nodes, edges, prefix) {
 }
 
 
-//
-// Algorithms
-//
+var algorithms = require('./algorithms')
 
-// probably move these to another file when there get to be lots of them.
+for(var k in algorithms) proto[k] = algorithms[k]
 
-
-function widthTraverse (graph, reachable, start, depth, hops, max, iter) {
-  if(!start)
-    throw new Error('Graphmitter#traverse: start must be provided')
-
-  var nodes = 1
-
-  reachable[start] = reachable[start] == null ? 0 : reachable[start]
-
-  var queue = [{key: start, hops: depth}]
-  iter = iter || function () {}
-
-  while(queue.length && (!max || nodes < max)) {
-    var o = queue.shift()
-    var h = o.hops
-    var n = graph.nodes[o.key]
-    if(n && (!hops || (h + 1 <= hops)))
-      n.each(function (k) {
-        // If we have already been to this node by a shorter path,
-        // then skip this node (this only happens when processing
-        // a realtime edge)
-        if(reachable[k] != null && reachable[k] < h + 1) return
-        iter(o.key, k, h + 1, reachable[k])
-        reachable[k] = h + 1
-        nodes ++
-        queue.push({key: k, hops: h + 1})
-      })
-  }
-
-  return reachable
-}
-
-proto.traverse = function (opts, onEach) {
-  var self = this
-  var maxHops = opts.hops || 3
-  var maxNodes = opts.max || 150
-  var reachable = {}
-  opts.each = onEach = onEach || opts.each
-
-  widthTraverse(
-    this, reachable,
-    opts.start,
-    0,             //initial hops
-    opts.hops,     //max hops
-    opts.max,      //max nodes
-    opts.old !== false && onEach
-  )
-
-  if(!onEach || opts.live === false) return reachable
-
-  function onEdge (from, to) {
-    //if this edge is part of the initial setd
-    if(reachable[from] != null && reachable[from] < maxHops) {
-      //edges to new nodes.
-      var h = reachable[from] + 1
-      var _h = reachable[to]
-      if(_h == null)
-        onEach(from, to, reachable[to] = h, _h)
-      else if(Math.min(h, _h) != _h)
-        onEach(from, to, reachable[to] = Math.min(h, _h), _h)
-
-      if(h <= maxHops && h != _h) {
-        //also add other nodes that are now reachable.
-        widthTraverse(self, reachable, to, h, maxHops, maxNodes, onEach)
-
-      }
-    }
-  }
-
-  this.on('edge', onEdge)
-
-  return function () {
-    self.removeListener('edge', onEdge)
-  }
-}
-
-// page rank. I adapted the algorithm to use
-// forward links instead of backward links which means
-// we only have to traverse the graph one time.
-
-proto.rank = function (opts) {
-  opts = opts || {}
-
-  var ranks = {}, links = {}, _ranks = {}
-  var N = count(this.nodes)
-  var iterations = opts.iterations || 1
-  var damping = opts.damping || 0.85
-  var init = (1 - damping) / N
-
-  //initialize
-  this.each(function (k, n) {
-    ranks[k] = 1/N; _ranks[k] = init
-    links[k] = count(n.edges)
-  })
-
-  while(iterations --> 0) {
-
-    //iteration
-    this.each(function (j, n) {
-      var r = damping*(ranks[j]/links[j])
-      n.each(function (k) { _ranks[k] += r })
-    })
-
-    //reset
-    for(var k in ranks)
-      ranks[k] = init
-
-    var __ranks = ranks
-    ranks = _ranks
-    _ranks = __ranks
-  }
-  return ranks
-}
