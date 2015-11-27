@@ -46,7 +46,7 @@ tape('path', function (t) {
   t.end()
 })
 
-tape('path', function (t) {
+tape('path, 2 hops', function (t) {
 
   var g = Graphmitter()
 
@@ -58,10 +58,40 @@ tape('path', function (t) {
     .edge('D', 'B')
 
   t.deepEqual(
-    g.path({source: 'D', dest: 'C', hops: 3}),
+    g.path({source: 'D', dest: 'C'}),
     ['D', 'A', 'C']
   )
-  
+
+  t.deepEqual(
+    g.path({source: 'D', dest: 'C', hops: 2}),
+    ['D', 'A', 'C']
+  )
+
   t.end()
 
 })
+
+
+tape('path, 3 hops', function (t) {
+
+  var g = Graphmitter()
+
+  g
+    .edge('A', 'C')
+    .edge('B', 'A')
+    .edge('D', 'B')
+
+  t.deepEqual(
+    g.path({source: 'D', dest: 'C'}),
+    ['D', 'B', 'A', 'C']
+  )
+
+  t.deepEqual(
+    g.path({source: 'D', dest: 'C', hops: 2}),
+    null
+  )
+
+  t.end()
+
+})
+
