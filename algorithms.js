@@ -132,6 +132,7 @@ exports.rank = function (opts) {
 
 //convert a spanning tree to an array.
 function toArray (span, root) {
+  if(!span[root]) return null
   var a = [root]
   while(span[root])
     a.push(root = span[root])
@@ -141,11 +142,12 @@ function toArray (span, root) {
 exports.path = function (opts) {
   var reverse = {}
   opts.start = opts.source
+  opts.live = opts.live !== true
   opts.each = function (f, t, h) {
-    console.log(f, t, h)
     reverse[t] = f
   }
   this.traverse(opts)
   return toArray(reverse, opts.dest)
 }
+
 
