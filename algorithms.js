@@ -141,6 +141,9 @@ function toArray (span, root) {
 
 exports.path = function (opts) {
   var reverse = {}
+  if(opts.source == opts.dest)
+    return [opts.source]
+
   opts.start = opts.source
   opts.live = opts.live !== true
   opts.each = function (f, t, h) {
