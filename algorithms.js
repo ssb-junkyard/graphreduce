@@ -145,10 +145,11 @@ exports.path = function (opts) {
     return [opts.source]
 
   opts.start = opts.source
-  opts.live = opts.live !== true
+  opts.live = false
   opts.each = function (f, t, h) {
     reverse[t] = f
   }
+
   this.traverse(opts)
   return toArray(reverse, opts.dest)
 }
