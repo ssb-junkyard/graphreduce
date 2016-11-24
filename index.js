@@ -132,6 +132,16 @@ proto.toJSON = function (iter) {
   return g
 }
 
+Graphmitter.fromJSON = function (graph) {
+  var g = new Graphmitter()
+  for(var k in graph) {
+    var node = graph[k]
+    for(var j in node)
+      g.edge(k, j, node[j])
+  }
+  return g
+}
+
 //
 // graph generators
 //
