@@ -209,6 +209,8 @@ tape('join two paths', function (t) {
   g.edge('#2', '#3')
   
   t.deepEqual(expected.slice(0, 4), edges)
+
+  t.deepEqual(Graphmitter.fromJSON(g.toJSON()).rank(), g.rank())
   console.log(edges)
   t.end()
 

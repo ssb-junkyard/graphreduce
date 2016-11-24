@@ -31,7 +31,12 @@ tape('random graph', function (t) {
 
   var g = Graphmitter.random(20, 30)
   console.log(g.toJSON())
-  console.log(g.rank({iterations: 3}))
+    var ranks = g.rank({iterations: 15})
+  console.log(ranks)
+  var sum = 0
+  for(var k in ranks)
+    sum += ranks[k]
+  console.log(sum)
 
   t.end()
 })

@@ -66,8 +66,12 @@ tape('hops', function (t) {
   subset(reachable4, reachable3)
   subset(reachable4, reachable2)
 
+  console.log(g.toJSON())
+  var g2 = Graphmitter.fromJSON(g.toJSON())
+  t.deepEqual(g2, g)
   t.end()
 })
+
 
 //make sure the empty graph does not throw
 tape('empty graph', function (t) {
@@ -76,4 +80,6 @@ tape('empty graph', function (t) {
   t.deepEqual(o, {a: 0})
   t.end()
 })
+
+
 
