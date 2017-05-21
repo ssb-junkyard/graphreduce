@@ -5,39 +5,57 @@
 
 // probably move these to another file when there get to be lots of them.
 
-function count(obj) {
-  var c = 0
-  for(var k in obj) c++
-  return c
+exports.hops = function (g, start, initial, max, seen) {
+  var visited = {}
+  var queue = [start]
+  visited[start] = initial
+  while(queue.length) {
+    var node = queue.shift()
+    var h = visited[node]
+  //  console.log('EXPAND', node, h)
+    for(var k in g[node]) {
+//      console.log(node, k, visited[k], h)
+      if(
+        visited[k] == null
+      && (!seen || (seen[k] == null || seen[k] > h+1))
+      && h < max
+      ) {
+        queue.push(k)
+        visited[k] = h + 1
+      }
+    }
+  }
+  return visited
 }
 
-function widthTraverse (graph, reachable, start, depth, hops, max, iter) {
+
+//mutates `reachable`, btw
+function widthTraverse (graph, reachable, start, depth, hops, iter) {
   if(!start)
     throw new Error('Graphmitter#traverse: start must be provided')
 
-  var nodes = 1
+  //var nodes = 1
 
   reachable[start] = reachable[start] == null ? 0 : reachable[start]
 
-  var queue = [{key: start, hops: depth}]
+  var queue = [start] //{key: start, hops: depth}]
   iter = iter || function () {}
-  var abort = false
-  while(queue.length && (!max || nodes < max) && !abort) {
+  while(queue.length) {
     var o = queue.shift()
-    var h = o.hops
-    var n = graph.nodes[o.key]
-    if(n && (!hops || (h + 1 <= hops)))
-      for(var k in n.edges) {
+    var h = reachable[o]
+    var node = graph[o]
+    if(node && (!hops || (h + 1 <= hops)))
+      for(var k in node) {
         // If we have already been to this node by a shorter path,
         // then skip this node (this only happens when processing
         // a realtime edge)
         if(!(reachable[k] != null && reachable[k] < h + 1)) {
-          if(false === iter(o.key, k, h + 1, reachable[k]))
+          if(false === iter(o, k, h + 1, reachable[k]))
             return reachable
 
           reachable[k] = h + 1
-          nodes ++
-          queue.push({key: k, hops: h + 1})
+//          nodes ++
+          queue.push(k)
         }
     }
   }
@@ -45,26 +63,29 @@ function widthTraverse (graph, reachable, start, depth, hops, max, iter) {
   return reachable
 }
 
-exports.traverse = function (opts, onEach) {
-  var self = this
+// traverse(g, start, opts, onEach) => seen
+
+// batch(g, seen, ary, {hops: h}, onEach) => seen
+
+exports.traverse = function (g, opts, onEach) {
   var maxHops = opts.hops || 3
-  var maxNodes = opts.max || 150
   var reachable = {}
   opts.each = onEach = onEach || opts.each
 
+  console.log(maxHops, opts)
+
   widthTraverse(
-    this, reachable,
+    g, reachable,
     opts.start,
     0,             //initial hops
-    opts.hops,     //max hops
-    opts.max,      //max nodes
+    maxHops,     //max hops
     opts.old !== false && onEach
   )
 
   if(!onEach || opts.live === false) return reachable
 
   function onEdge (from, to) {
-    //if this edge is part of the initial setd
+    //if this edge is part of the initial set
     if(reachable[from] != null && reachable[from] < maxHops) {
       //edges to new nodes.
       var h = reachable[from] + 1
@@ -74,58 +95,19 @@ exports.traverse = function (opts, onEach) {
       else if(Math.min(h, _h) != _h)
         onEach(from, to, reachable[to] = Math.min(h, _h), _h)
 
+      //this is used only for realtime adds.
       if(h <= maxHops && h != _h) {
         //also add other nodes that are now reachable.
-        widthTraverse(self, reachable, to, h, maxHops, maxNodes, onEach)
+        widthTraverse(self, reachable, to, h, maxHops, onEach)
 
       }
     }
-  }
-
-  this.on('edge', onEdge)
-
-  return function () {
-    self.removeListener('edge', onEdge)
   }
 }
 
 // page rank. I adapted the algorithm to use
 // forward links instead of backward links which means
 // we only have to traverse the graph one time.
-
-exports.rank = function (opts) {
-  opts = opts || {}
-
-  var ranks = {}, links = {}, _ranks = {}
-  var N = count(this.nodes)
-  var iterations = opts.iterations || 1
-  var damping = opts.damping || 0.85
-  var init = (1 - damping) / N
-
-  //initialize
-  this.each(function (k, n) {
-    ranks[k] = 1/N; _ranks[k] = init
-    links[k] = count(n.edges)
-  })
-
-  while(iterations --> 0) {
-
-    //iteration
-    this.each(function (j, n) {
-      var r = damping*(ranks[j]/links[j])
-      n.each(function (k) { _ranks[k] += r })
-    })
-
-    //reset
-    for(var k in ranks)
-      ranks[k] = init
-
-    var __ranks = ranks
-    ranks = _ranks
-    _ranks = __ranks
-  }
-  return ranks
-}
 
 //find the shortest path between two nodes.
 //if there was no path within max hops, return null.
@@ -153,5 +135,4 @@ exports.path = function (opts) {
   this.traverse(opts)
   return toArray(reverse, opts.dest)
 }
-
 

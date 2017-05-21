@@ -1,18 +1,21 @@
-
-var Graphmitter = require('../')
+var statistics = require('statistics')
+var G = require('../')
 var tape = require('tape')
 
 tape('pagerank', function (t) {
 
-  var g = Graphmitter()
+  var g = {}
 
-  g
-    .edge('A', 'C')
-    .edge('B', 'A').edge('A', 'C')
-    .edge('C', 'A')
-    .edge('D', 'A').edge('D', 'B').edge('D', 'C')
+  
+  G.addEdge(g, 'A', 'C')
+  G.addEdge(g, 'B', 'A')
+  G.addEdge(g, 'A', 'C')
+  G.addEdge(g, 'C', 'A')
+  G.addEdge(g, 'D', 'A')
+  G.addEdge(g, 'D', 'B')
+  G.addEdge(g, 'D', 'C')
 
-  var r = g.rank({})
+  var r = G.rank(g, {})
 
   console.log(r)
 
@@ -28,15 +31,24 @@ tape('pagerank', function (t) {
 })
 
 tape('random graph', function (t) {
-
-  var g = Graphmitter.random(20, 30)
-  console.log(g.toJSON())
-    var ranks = g.rank({iterations: 15})
-  console.log(ranks)
-  var sum = 0
-  for(var k in ranks)
-    sum += ranks[k]
-  console.log(sum)
+  var total, N = 100
+  for(var i = 0; i < N; i++) {
+    var g = G.random(20, 30)
+    var ranks = G.rank(g, {iterations: 15})
+    var sum = 0
+    for(var k in ranks)
+      sum += ranks[k]
+    total = statistics(total, sum)
+//    console.log(sum)
+  }
+  console.log(total)
+  //rank should be around 1.
+  t.ok(total.mean + total.stdev*2 > 1)
+  t.ok(total.mean - total.stdev*2 < 1)
 
   t.end()
 })
+
+
+
+

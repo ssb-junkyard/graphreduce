@@ -2,174 +2,150 @@
 
 var EventEmitter = require('events').EventEmitter
 
-var inherits = require('util').inherits
-
-inherits(Graphmitter, EventEmitter)
-
-module.exports = Graphmitter
-
 function each(obj, iter) {
   for(var k in obj) iter(k, obj[k])
 }
-
-//
-// Node / Vertice
-//
-
-function Node () {
-  this.edges = {}
+function hasEdge (g, f, t) {
+  return g[f] && Object.hasOwnProperty(g[f], t)
 }
 
-var nproto = Node.prototype
-
-//returns the old data for this edge..
-nproto.edge = function (to, data) {
-  var _data = this.edges[to]
-  this.edges[to] = (data == null ? true : data)
-  return _data
+function addNode(g, n) {
+  g[n] = g[n] || {}
+  return g
 }
 
-nproto.has = function (to) {
-  return this.edges[to]
+function get (g, f, t) {
+  if(t == null) throw new Error('not implemented')
+  return g[f] && g[f][t] || null
 }
 
-//also returns the old data for this edge..
-nproto.del = function (to, data) {
-  var _data = this.edges[to]
-  delete this.edges[to]
-  return _data
+function addEdge (g, from, to, data) {
+
+  (g[from] = g[from] || {})[to] = (data === undefined ? true : data)
+  return g
 }
 
-nproto.each = function (iter) {
-  each(this.edges, iter)
-  return this
+function delEdge (g, from, to) {
+  delete g[from][to]
 }
 
-//
-// the whole graph
-//
-
-function Graphmitter () {
-  if(!(this instanceof Graphmitter)) return new Graphmitter()
-  this.nodes = {}
-}
-
-var proto = Graphmitter.prototype
-
-proto.hasNode = function (n) {
-  return !!this.nodes[n]
-}
-
-proto.hasEdge = function (f, t) {
-  return this.hasNode(f) && !!this.nodes[f].edges[t] != null
-}
-
-proto.node = function (n) {
-  return this.nodes[n] = this.nodes[n] || new Node(n)
-}
-
-proto.get = function (f, t) {
-  if(t == null) return this.nodes[f]
-  return this.hasNode(f) ? this.nodes[f].edges[t] : null
-}
-
-proto.edge = function (from, to, data) {
-  data = (data == null ? true : data)
-  var f = this.node(from)
-  this.node(to)
-  var _data = f.edge(to, data)
-
-  if(_data !== data)
-    this.emit('edge', from, to, data, _data)
-  return this
-}
-
-proto.del = function (from, to) {
-  var data = this.node(from).del(to)
-  if (typeof data !== 'undefined')
-    this.emit('del', from, to, data)
-  return this
-}
-
-proto.each = function (iter) {
-  each(this.nodes, iter)
-  return this
-}
-
-proto.eachEdge = function (iter) {
-  each(this.nodes, function (from, n) {
-    each(n.edges, function (to, data) {
+function eachEdge (g, iter) {
+  each(g, function (from, n) {
+    each(n, function (to, data) {
       iter(from, to, data)
     })
   })
-  return this
 }
 
 //get a random node
-proto.random = function () {
-  var keys = Object.keys(this.nodes)
+function randomNode (g) {
+  var keys = Object.keys(g)
   return keys[~~(keys.length*Math.random())]
 }
 
 //add another subgraph
-proto.add = function (g2) {
-  var g1 = this
-  g2.eachEdge(function (from, to, data) {
-    g1.edge(from, to, data)
+function addGraph (g1, g2) {
+  eachEdge(g2, function (from, to, data) {
+    addEdge(g1, from, to, data)
   })
-  return this
+  return g1
 }
 
-proto.toJSON = function (iter) {
-  var g = {}
-  this.each(function (k, v) {
-    var e = {}
-    v.each(function (k, v) {
-      e[k] = v
-    })
-    g[k] = e
-  })
-  return g
-}
-
-Graphmitter.fromJSON = function (graph) {
-  var g = new Graphmitter()
-  for(var k in graph) {
-    var node = graph[k]
-    for(var j in node)
-      g.edge(k, j, node[j])
-  }
-  return g
-}
 
 //
 // graph generators
 //
 
-Graphmitter.random = function (nodes, edges, prefix) {
+function random (nodes, edges, prefix) {
   prefix = prefix || '#'
   if(isNaN(+nodes)) throw new Error('nodes must be a number')
   if(isNaN(+edges)) throw new Error('edges must be a number')
 
-  var n = 0, g = new Graphmitter()
+  var n = 0, g = {}
 
   function rand(n) {
     return prefix+~~(Math.random()*n)
   }
 
   for(var i = 0; i < nodes; i++)
-    g.node(prefix+i)
+    addNode(g, prefix+i)
 
   for(var i = 0; i < edges; i++) {
     var a = rand(nodes), b = rand(nodes)
-    g.edge(a, b).edge(b, a)
+    addEdge(g, a, b)
+    addEdge(g, b, a)
   }
 
   return g
 }
 
 
-var algorithms = require('./algorithms')
+exports.random = random
+exports.each = each
+exports.addEdge = addEdge
+exports.eachEdge = eachEdge
+exports.addGraph = addGraph
+exports.get = get
 
-for(var k in algorithms) proto[k] = algorithms[k]
+function count(obj) {
+  var c = 0
+  for(var k in obj) c++
+  return c
+}
+
+exports.rank = function (g, opts) {
+  opts = opts || {}
+
+  var ranks = {}, links = {}, _ranks = {}
+  var N = count(g)
+  var iterations = opts.iterations || 1
+  var damping = opts.damping || 0.85
+  var init = (1 - damping) / N
+
+  //initialize
+  each(g, function (k, n) {
+    ranks[k] = 1/N; _ranks[k] = init
+    links[k] = count(n)
+  })
+
+  while(iterations --> 0) {
+
+    //iteration
+    each(g, function (j, n) {
+      var r = damping*(ranks[j]/links[j])
+      each(n, function (k) { _ranks[k] += r })
+    })
+
+    //reset
+    for(var k in ranks)
+      ranks[k] = init
+
+    var __ranks = ranks
+    ranks = _ranks
+    _ranks = __ranks
+  }
+  return ranks
+}
+
+exports.hops = function (g, start, initial, max, seen) {
+  if(!g[start]) return {}
+  var visited = {}
+  var queue = [start]
+  visited[start] = initial
+  while(queue.length) {
+    var node = queue.shift()
+    var h = visited[node]
+    for(var k in g[node]) {
+      if(
+        visited[k] == null
+      && (!seen || (seen[k] == null || seen[k] > h+1))
+      && h < max
+      ) {
+        queue.push(k)
+        visited[k] = h + 1
+      }
+    }
+  }
+  return visited
+}
 
