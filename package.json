@@ -1,89 +1,41 @@
 {
-  "_args": [
-    [
-      {
-        "raw": "graphreduce",
-        "scope": null,
-        "escapedName": "graphreduce",
-        "name": "graphreduce",
-        "rawSpec": "",
-        "spec": "latest",
-        "type": "tag"
-      },
-      "/home/dominic/c/graphmitter"
-    ]
-  ],
-  "_from": "graphreduce@latest",
-  "_id": "graphreduce@3.0.0",
-  "_inCache": true,
-  "_location": "/graphreduce",
-  "_nodeVersion": "6.5.0",
-  "_npmOperationalInternal": {
-    "host": "packages-12-west.internal.npmjs.com",
-    "tmp": "tmp/graphreduce-3.0.0.tgz_1480981677742_0.03493128903210163"
+  "name": "graphreduce",
+  "version": "3.0.0",
+  "description": "construct graphs as reduce function",
+  "homepage": "https://github.com/ssbc/graphreduce",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ssbc/graphreduce.git"
   },
-  "_npmUser": {
-    "name": "dominictarr",
-    "email": "dominic.tarr@gmail.com"
-  },
-  "_npmVersion": "3.10.3",
-  "_phantomChildren": {},
-  "_requested": {
-    "raw": "graphreduce",
-    "scope": null,
-    "escapedName": "graphreduce",
-    "name": "graphreduce",
-    "rawSpec": "",
-    "spec": "latest",
-    "type": "tag"
-  },
-  "_requiredBy": [
-    "#USER"
-  ],
-  "_resolved": "https://registry.npmjs.org/graphreduce/-/graphreduce-3.0.0.tgz",
-  "_shasum": "816ccdff41aeba137c2638181c5ff5269f33b1b0",
-  "_shrinkwrap": null,
-  "_spec": "graphreduce",
-  "_where": "/home/dominic/c/graphmitter",
   "author": {
     "name": "Dominic Tarr",
     "email": "dominic.tarr@gmail.com",
     "url": "http://dominictarr.com"
   },
-  "bugs": {
-    "url": "https://github.com/ssbc/graphreduce/issues"
-  },
   "dependencies": {
     "statistics": "^3.3.0"
   },
-  "description": "construct graphs as reduce function",
   "devDependencies": {
     "tape": "~3.0.3"
-  },
-  "directories": {},
-  "dist": {
-    "shasum": "816ccdff41aeba137c2638181c5ff5269f33b1b0",
-    "tarball": "https://registry.npmjs.org/graphreduce/-/graphreduce-3.0.0.tgz"
-  },
-  "gitHead": "000497110d04bbbb451d5c92f1dd343bee432055",
-  "homepage": "https://github.com/ssbc/graphreduce",
-  "license": "MIT",
-  "maintainers": [
-    {
-      "name": "dominictarr",
-      "email": "dominic.tarr@gmail.com"
-    }
-  ],
-  "name": "graphreduce",
-  "optionalDependencies": {},
-  "readme": "ERROR: No README data found!",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/ssbc/graphreduce.git"
   },
   "scripts": {
     "prepublish": "npm ls && npm test",
     "test": "set -e; for t in test/*.js; do node $t; done"
   },
-  "version": "3.0.0"
+  "license": "MIT"
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
