@@ -1,7 +1,4 @@
 
-
-var EventEmitter = require('events').EventEmitter
-
 function each(obj, iter) {
   for(var k in obj) iter(k, obj[k])
 }
@@ -26,7 +23,7 @@ function addEdge (g, from, to, data) {
 }
 
 function removeEdge (g, from, to) {
-  delete g[from][to]
+  if('object' === typeof g[from]) delete g[from][to]
 }
 
 function eachEdge (g, iter) {
@@ -150,5 +147,4 @@ exports.hops = function (g, start, initial, max, seen) {
   }
   return visited
 }
-
 
