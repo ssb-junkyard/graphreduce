@@ -25,7 +25,7 @@ function addEdge (g, from, to, data) {
   return g
 }
 
-function delEdge (g, from, to) {
+function removeEdge (g, from, to) {
   delete g[from][to]
 }
 
@@ -83,6 +83,8 @@ function random (nodes, edges, prefix) {
 exports.random = random
 exports.each = each
 exports.addEdge = addEdge
+exports.hasEdge = hasEdge
+exports.removeEdge = removeEdge
 exports.eachEdge = eachEdge
 exports.addGraph = addGraph
 exports.get = get
@@ -148,4 +150,5 @@ exports.hops = function (g, start, initial, max, seen) {
   }
   return visited
 }
+
 
