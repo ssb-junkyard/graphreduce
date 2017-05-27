@@ -24,6 +24,7 @@ function addEdge (g, from, to, data) {
 
 function removeEdge (g, from, to) {
   if('object' === typeof g[from]) delete g[from][to]
+  return g
 }
 
 function eachEdge (g, iter) {
