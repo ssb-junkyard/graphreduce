@@ -1,6 +1,6 @@
 {
   "name": "graphreduce",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "construct graphs as reduce function",
   "homepage": "https://github.com/ssbc/graphreduce",
   "repository": {
